@@ -1,4 +1,3 @@
-# --- 1. Imports ---
 import os
 import datetime
 import pytz
@@ -6,7 +5,7 @@ import logging
 from functools import wraps
 
 from flask import (Flask, render_template, request, redirect, url_for, flash, 
-                   session, jsonify)
+                   session)
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (LoginManager, UserMixin, login_user, logout_user, 
                          login_required, current_user)
@@ -20,9 +19,9 @@ from utils.url_utils import get_url_preview
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- 3. Flask App Initialization and Configuration ---
-app = Flask(__name__)
+app = Flask(__name__, instance_relative_config=True)
 app.config['SECRET_KEY'] = 'your_very_secret_key_that_is_long_and_random'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sns.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'sns.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=60)
 
