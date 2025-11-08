@@ -295,6 +295,8 @@ def delete_user(user_id):
 def create_database_and_admin():
     """Creates database and initial admin user."""
     with app.app_context():
+        # Ensure the instance path directory exists
+        os.makedirs(app.instance_path, exist_ok=True)
         db.create_all()
         if not User.query.filter_by(username='admin').first():
             admin_user = User(username='admin', is_admin=True)
