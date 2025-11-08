@@ -11,3 +11,8 @@ instance/
 # IDE / Editor specific
 .vscode/
 .idea/
+
+# Build artifacts
+build/
+dist/
+*.spec
