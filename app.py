@@ -1,4 +1,5 @@
 import os
+import sys # Import sys
 import datetime
 import pytz
 import logging
@@ -19,7 +20,15 @@ from utils.url_utils import get_url_preview
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- 3. Flask App Initialization and Configuration ---
-app = Flask(__name__, instance_relative_config=True)
+# Determine if running as a PyInstaller bundled app
+if getattr(sys, 'frozen', False):
+    # If frozen, use the _MEIPASS directory for templates
+    template_dir = os.path.join(sys._MEIPASS, 'templates')
+else:
+    # If not frozen, use the default templates directory
+    template_dir = 'templates'
+
+app = Flask(__name__, instance_relative_config=True, template_folder=template_dir)
 app.config['SECRET_KEY'] = 'your_very_secret_key_that_is_long_and_random'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'sns.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
