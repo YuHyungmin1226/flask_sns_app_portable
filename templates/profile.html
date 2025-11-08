@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }}님의 프로필 - Flask SNS{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card text-center">
+            <div class="card-body">
+                <h1 class="card-title">{{ user.username }}</h1>
+                {% if user.is_admin %}
+                    <span class="badge bg-success">관리자</span>
+                {% endif %}
+                <p class="text-muted">작성한 게시물: {{ posts_pagination.total }}개</p>
+                {% if user == current_user %}
+                    <a href="{{ url_for('change_password') }}" class="btn btn-secondary">비밀번호 변경</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <h2 class="mt-5 mb-4">작성한 게시물</h2>
+
+        <div id="post-container">
+            {% include '_posts_list.html' %}
+        </div>
+
+        <div id="loading-indicator" class="text-center" style="display: none;">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        {% if not posts_pagination.items %}
+            <p class="text-center">작성한 게시물이 없습니다.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let page = {{ posts_pagination.page }};
+        let hasNext = {{ posts_pagination.has_next|tojson }};
+        let isLoading = false;
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const postContainer = document.getElementById('post-container');
+
+        window.addEventListener('scroll', () => {
+            if (!hasNext || isLoading) return;
+
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+                isLoading = true;
+                loadingIndicator.style.display = 'block';
+                page++;
+
+                fetch(`{{ url_for('profile', username=user.username) }}?page=${page}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    if (html.trim() !== "") {
+                        postContainer.insertAdjacentHTML('beforeend', html);
+                        isLoading = false;
+                    } else {
+                        hasNext = false;
+                    }
+                    loadingIndicator.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error fetching more posts:', error);
+                    isLoading = false;
+                    loadingIndicator.style.display = 'none';
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

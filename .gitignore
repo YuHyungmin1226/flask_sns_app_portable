@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database
+sns.db
+instance/
+
+# IDE / Editor specific
+.vscode/
+.idea/
