@@ -22,13 +22,15 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # --- 3. Flask App Initialization and Configuration ---
 # Determine if running as a PyInstaller bundled app
 if getattr(sys, 'frozen', False):
-    # If frozen, use the _MEIPASS directory for templates
+    # If frozen, use the executable's directory as the base for instance path
+    application_path = os.path.dirname(sys.executable)
     template_dir = os.path.join(sys._MEIPASS, 'templates')
 else:
-    # If not frozen, use the default templates directory
+    # If not frozen, use the current working directory as the base for instance path
+    application_path = os.getcwd()
     template_dir = 'templates'
 
-app = Flask(__name__, instance_relative_config=True, template_folder=template_dir)
+app = Flask(__name__, instance_path=os.path.join(application_path, 'instance'), template_folder=template_dir)
 app.config['SECRET_KEY'] = 'your_very_secret_key_that_is_long_and_random'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'sns.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
