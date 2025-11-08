@@ -20,13 +20,11 @@ USB에 복사하여 어디서든 실행할 수 있는 개인 SNS 애플리케이
 
 ### 1. 실행 방법
 
-```bash
-# Python이 설치된 경우
-python FlaskSNS.py
-
-# 또는 더블클릭으로 실행
-FlaskSNS.py
-```
+- **Python 스크립트로 실행**:
+  - `python FlaskSNS.py` 명령어를 입력하여 실행합니다.
+- **Windows 실행 파일(.exe)로 실행**:
+  - `dist` 폴더 안의 `FlaskSNS.exe` 파일을 더블클릭하여 실행합니다.
+  - **참고**: 실행 시 서버 상태를 보여주는 검은색 콘솔 창이 함께 나타납니다. **프로그램을 종료하려면 이 콘솔 창을 닫으세요.**
 
 ### 2. 접속
 
@@ -38,7 +36,7 @@ FlaskSNS.py
 
 1. 이 폴더 전체를 USB에 복사
 2. USB를 다른 PC에 연결
-3. `FlaskSNS.py` 실행
+3. `FlaskSNS.py` 또는 `dist/FlaskSNS.exe` 실행
 4. 브라우저에서 접속
 
 ## 📁 폴더 구조
@@ -51,13 +49,7 @@ FlaskSNS/
 ├── templates/          # HTML 템플릿
 │   ├── base.html      # 기본 템플릿
 │   ├── index.html     # 메인 페이지
-│   ├── login.html     # 로그인 페이지
-│   ├── register.html  # 회원가입 페이지
-│   ├── new_post.html  # 새 게시물 작성
-│   ├── view_post.html # 게시물 보기
-│   ├── profile.html   # 프로필 페이지
-│   ├── admin.html     # 관리자 페이지
-│   └── change_password.html # 비밀번호 변경
+│   ├── ... (기타 템플릿)
 │   └── _posts_list.html # 무한 스크롤용 템플릿
 ├── utils/             # 유틸리티 함수
 │   └── url_utils.py   # URL 미리보기 생성
@@ -77,10 +69,6 @@ FlaskSNS/
 **복원 방법:**
 1. 백업한 `sns.db` 파일을 앱 폴더에 복사
 2. 앱 재실행
-
-**⚠️ 주의사항:**
-- `sns.db` 파일은 Git에 포함되지 않습니다.
-- 데이터 백업은 정기적으로 수행하세요.
 
 ## 🔧 시스템 요구사항
 
@@ -111,13 +99,6 @@ pip install -r requirements.txt
 - **데이터 보호**: 모든 데이터는 로컬에만 저장됩니다.
 - **로그인 제한**: 5회 로그인 실패 시 15분간 계정이 잠깁니다.
 - **세션 관리**: 60분간 활동이 없으면 자동으로 로그아웃됩니다. '로그인 상태 유지'를 통해 세션 시간을 연장할 수 있습니다.
-
-## 🔄 업데이트
-
-1. 기존 폴더 백업
-2. 새 버전 다운로드
-3. 기존 `sns.db` 파일 복사
-4. 새 버전 실행
 
 ## 🐛 문제 해결
 
