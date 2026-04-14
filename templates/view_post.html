@@ -73,7 +73,7 @@
                             <div>
                                 <strong>{{ comment.author.username }}</strong>
                                 <small class="text-muted ms-2">{{ get_kst_time(comment.timestamp).strftime('%Y-%m-%d %H:%M') }}</small>
-                                <p class="mb-0">{{ comment.content }}</p>
+                                <p class="mb-0 comment-content">{{ comment.content }}</p>
                             </div>
                             {% if comment.author == current_user or current_user.is_admin %}
                             <form action="{{ url_for('delete_comment', comment_id=comment.id) }}" method="POST" onsubmit="return confirm('이 댓글을 삭제하시겠습니까?');">
