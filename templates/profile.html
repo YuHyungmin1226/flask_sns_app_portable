@@ -20,7 +20,7 @@
 
         <h2 class="mt-5 mb-4">작성한 게시물</h2>
 
-        <div id="post-container">
+        <div id="post-container" data-page="{{ posts_pagination.page }}" data-has-next="{{ posts_pagination.has_next|tojson }}">
             {% include '_posts_list.html' %}
         </div>
 
@@ -38,11 +38,11 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        let page = {{ posts_pagination.page }};
-        let hasNext = {{ posts_pagination.has_next|tojson }};
+        const postContainer = document.getElementById('post-container');
+        let page = parseInt(postContainer.getAttribute('data-page'));
+        let hasNext = postContainer.getAttribute('data-has-next') === 'true';
         let isLoading = false;
         const loadingIndicator = document.getElementById('loading-indicator');
-        const postContainer = document.getElementById('post-container');
 
         window.addEventListener('scroll', () => {
             if (!hasNext || isLoading) return;
