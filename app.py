@@ -6,15 +6,19 @@ import logging
 from functools import wraps
 
 from flask import (Flask, render_template, request, redirect, url_for, flash, 
-                   session)
+                   session, send_from_directory)
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (LoginManager, UserMixin, login_user, logout_user, 
                          login_required, current_user)
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from sqlalchemy import desc
 
 # Local utils
 from utils.url_utils import get_url_preview
+from utils.file_utils import save_file, validate_file, get_file_info_from_json, delete_file
+
+import json
 
 # --- 2. Logging Configuration ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -35,6 +39,7 @@ app.config['SECRET_KEY'] = 'your_very_secret_key_that_is_long_and_random'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'sns.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=60)
+app.config['MAX_CONTENT_LENGTH'] = 5000 * 1024 * 1024  # 5000MB
 
 # --- 4. Database and Login Manager Initialization ---
 db = SQLAlchemy(app)
@@ -90,6 +95,7 @@ class Post(db.Model):
     url_preview_description = db.Column(db.Text, nullable=True)
     url_preview_image = db.Column(db.String(300), nullable=True)
     url_preview_url = db.Column(db.String(300), nullable=True)
+    files = db.Column(db.Text, default='[]')
     comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete-orphan")
 
 class Comment(db.Model):
@@ -115,6 +121,19 @@ def inject_utility_processor():
         'now': datetime.datetime.now(KST),
         'get_kst_time': get_kst_time
     }
+
+@app.template_filter('from_json')
+def from_json_filter(value):
+    if not value: return []
+    try:
+        return json.loads(value)
+    except:
+        return []
+
+@app.template_filter('format_size')
+def format_size_filter(size):
+    from utils.file_utils import get_file_size_display
+    return get_file_size_display(size)
 
 
 # --- 10. Route Definitions ---
@@ -199,18 +218,38 @@ def index():
 @login_required
 def new_post():
     if request.method == 'POST':
-        content = request.form['content']
-        if not content:
-            flash('내용을 입력해주세요.', 'danger')
+        content = request.form.get('content', '').strip()
+        files = request.files.getlist('files')
+        has_valid_files = any(file and file.filename for file in files)
+
+        if not content and not has_valid_files:
+            flash('내용을 입력하거나 파일을 첨부해주세요.', 'danger')
             return redirect(request.url)
-        post = Post(content=content, author=current_user)
+            
+        # 다중 파일 업로드 처리
+        uploaded_files = []
+        for file in files:
+            if file and file.filename:
+                secure_name = secure_filename(file.filename)
+                errors = validate_file(file)
+                if errors:
+                    flash(f"파일 업로드 오류 ({secure_name}): {', '.join(errors)}", 'danger')
+                    continue
+                try:
+                    file_info = save_file(file, secure_name)
+                    uploaded_files.append(file_info)
+                except Exception as e:
+                    flash(f"파일 저장 실패 ({secure_name}): {str(e)}", 'danger')
+                    
+        post = Post(content=content, author=current_user, files=json.dumps(uploaded_files, ensure_ascii=False) if uploaded_files else '[]')
         try:
-            preview_data = get_url_preview(content)
-            if preview_data:
-                post.url_preview_title = preview_data['title']
-                post.url_preview_description = preview_data['description']
-                post.url_preview_image = preview_data['image']
-                post.url_preview_url = preview_data['url']
+            if content:
+                preview_data = get_url_preview(content)
+                if preview_data:
+                    post.url_preview_title = preview_data['title']
+                    post.url_preview_description = preview_data['description']
+                    post.url_preview_image = preview_data['image']
+                    post.url_preview_url = preview_data['url']
         except Exception as e:
             logging.error(f"URL preview generation failed: {e}")
         db.session.add(post)
@@ -238,6 +277,15 @@ def delete_post(post_id):
     if post.author != current_user and not current_user.is_admin:
         flash('삭제 권한이 없습니다.', 'danger')
         return redirect(url_for('view_post', post_id=post.id))
+        
+    # 로컬 첨부 파일 삭제 로직
+    files = get_file_info_from_json(post.files)
+    for file_info in files:
+        if file_info and file_info.get('file_path'):
+            delete_file(file_info['file_path'])
+            if file_info.get('thumbnail_path'):
+                delete_file(file_info['thumbnail_path'])
+                
     db.session.delete(post)
     db.session.commit()
     return redirect(url_for('index'))
@@ -301,6 +349,15 @@ def delete_user(user_id):
     db.session.delete(user_to_delete)
     db.session.commit()
     return redirect(url_for('admin'))
+
+@app.route('/uploads/<folder>/<filename>')
+def uploaded_file(folder, filename):
+    return send_from_directory(os.path.join(application_path, 'uploads', folder), filename)
+
+@app.route('/download/<folder>/<filename>')
+@login_required
+def download_file(folder, filename):
+    return send_from_directory(os.path.join(application_path, 'uploads', folder), filename, as_attachment=True)
 
 # --- 11. Standalone Functions ---
 def create_database_and_admin():

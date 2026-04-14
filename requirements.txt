@@ -2,7 +2,10 @@ Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
 Flask-Login==0.6.3
 requests==2.31.0
+pyinstaller>=6.10.0
 beautifulsoup4==4.12.2
 waitress==3.0.2
 WTForms==3.0.1
 SQLAlchemy==2.0.41
+Pillow==10.3.0
+filetype==1.2.0
