@@ -38,20 +38,25 @@ USB에 복사하여 어디서든 실행할 수 있는 개인 SNS 애플리케이
 
 -   **URL**: http://localhost:5001 (기본 포트 5001이 사용 중일 경우, 자동으로 다른 사용 가능한 포트를 찾아 실행됩니다.)
 -   **기본 계정**: admin / admin123 (첫 실행 시 자동 생성됩니다. 로그인 후 프로필에서 변경을 권장합니다.)
--   **네트워크 접속**: http://[IP주소]:[포트] (같은 네트워크 내에서 다른 기기로 접속 가능)
+-   **네트워크 접속**: http://[IP주소]:[포트] (같은 네트워크 내에서 다른 기기로 접속 가능. 서버 시작 시 콘솔에 모든 가능한 접속 주소가 표시됩니다.)
 
-### 3. PyInstaller 빌드 및 포터블 실행 파일 생성
+### 3. PyInstaller 빌드 및 포터블 실행 파일 생성 (Cross-Platform)
 
-이 애플리케이션은 PyInstaller를 사용하여 단일 실행 파일(`FlaskSNS.exe`)로 빌드될 수 있습니다. 이 과정에서 데이터 지속성 및 템플릿 로딩 문제를 해결하기 위한 특별한 설정이 적용되었습니다.
+이 프로젝트는 macOS와 Windows 모두에서 쉽게 빌드할 수 있도록 통합 빌드 스크립트를 제공합니다. 운영체제를 자동으로 감지하여 최적의 옵션으로 실행 파일을 생성합니다.
 
-**빌드 명령:**
+**빌드 방법:**
 ```bash
-pyinstaller FlaskSNS.py --onefile --clean --distpath dist --add-data "templates;templates"
+# 필요한 패키지 설치
+pip install -r requirements.txt
+pip install pyinstaller
+
+# 자동 빌드 실행
+python build_portable.py
 ```
-*   `--onefile`: 모든 종속성을 포함하는 단일 실행 파일을 생성합니다.
-*   `--clean`: 빌드 전에 임시 파일과 캐시를 정리하여 깨끗한 빌드를 보장합니다.
-*   `--distpath dist`: 생성된 실행 파일을 `dist` 폴더에 저장합니다.
-*   `--add-data "templates;templates"`: `templates` 폴더와 그 내용을 실행 파일 내부에 포함시킵니다. 이는 Flask가 템플릿 파일을 찾을 수 있도록 하는 데 필수적입니다.
+
+**빌드 결과:**
+*   **macOS**: `dist/FlaskSNS`
+*   **Windows**: `dist/FlaskSNS.exe`
 
 **핵심 해결책:**
 PyInstaller로 빌드된 환경에서 Flask 애플리케이션이 `sns.db` 파일과 HTML 템플릿 파일을 올바르게 찾지 못하는 문제를 해결하기 위해 `app.py` 파일에 다음과 같은 로직이 추가되었습니다:

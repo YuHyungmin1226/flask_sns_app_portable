@@ -16,18 +16,30 @@ def find_free_port(start_port):
                 return port
             port += 1
 
-def get_local_ip():
-    """보다 안정적으로 로컬 LAN IP를 찾는 함수"""
+def get_all_local_ips():
+    """모든 가능한 유효한 LAN IP 목록을 반환하는 함수"""
+    ips = set()
+    
+    # 방법 1: 외부 연결 시도 (기본 게이트웨이 인터페이스)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # 실제 연결을 시도하지 않고 라우팅 테이블만 참조함
-        s.connect(('10.255.255.255', 1))
-        IP = s.getsockname()[0]
+        s.connect(('8.8.8.8', 1))
+        ips.add(s.getsockname()[0])
     except Exception:
-        IP = '127.0.0.1'
+        pass
     finally:
         s.close()
-    return IP
+        
+    # 방법 2: 호스트네임 기반 조회
+    try:
+        hostname = socket.gethostname()
+        for ip in socket.gethostbyname_ex(hostname)[2]:
+            ips.add(ip)
+    except Exception:
+        pass
+        
+    # 127.0.0.1 제외 및 정렬
+    return sorted([ip for ip in ips if ip != '127.0.0.1'])
 
 def main():
     """애플리케이션 메인 실행 함수"""
@@ -46,12 +58,17 @@ def main():
     try:
         port = find_free_port(start_port)
         
-        # 로컬 LAN IP 찾기
-        local_ip = get_local_ip()
+        # 모든 가용 로컬 IP 찾기
+        local_ips = get_all_local_ips()
 
         logging.info("Starting Flask SNS server...")
         logging.info(f" * Local access: http://localhost:{port}")
-        logging.info(f" * Network access: http://{local_ip}:{port}")
+        
+        if local_ips:
+            for ip in local_ips:
+                logging.info(f" * Network access: http://{ip}:{port}")
+        else:
+            logging.info(f" * Network access: http://127.0.0.1:{port}")
         logging.info("Press CTRL+C to quit")
         
         serve(app, host=host, port=port)
@@ -61,4 +78,8 @@ def main():
         sys.exit(1)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logging.info("Server stopped by user.")
+        sys.exit(0)
