@@ -19,6 +19,9 @@ def build():
         '--distpath', 'dist',
         '--add-data', f"templates{separator}templates",
         '--collect-all', 'charset_normalizer',
+        '--collect-all', 'filetype',
+        '--collect-all', 'pytz',
+        '--hidden-import', '81d243bd2c585b0f4821__mypyc',
     ]
     
     # 윈도우의 경우 실행 파일 뒤에 .exe 추가 (자동으로 처리되지만 명시적 확인용)
