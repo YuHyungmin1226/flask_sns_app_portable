@@ -16,6 +16,19 @@ def find_free_port(start_port):
                 return port
             port += 1
 
+def get_local_ip():
+    """보다 안정적으로 로컬 LAN IP를 찾는 함수"""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # 실제 연결을 시도하지 않고 라우팅 테이블만 참조함
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
 def main():
     """애플리케이션 메인 실행 함수"""
     # 데이터베이스 및 관리자 계정 생성
@@ -33,11 +46,8 @@ def main():
     try:
         port = find_free_port(start_port)
         
-        # 로컬 IP 주소 찾기
-        try:
-            local_ip = socket.gethostbyname(socket.gethostname())
-        except socket.gaierror:
-            local_ip = '127.0.0.1' # 실패 시 로컬호스트 사용
+        # 로컬 LAN IP 찾기
+        local_ip = get_local_ip()
 
         logging.info("Starting Flask SNS server...")
         logging.info(f" * Local access: http://localhost:{port}")
